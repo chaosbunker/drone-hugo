@@ -20,7 +20,7 @@ FROM plugins/base:linux-amd64
 LABEL maintainer="Dennis Rodewyk <ufo@chaosbunker.com>" \
   org.label-schema.name="Drone Hugo"
 
-ENV HUGO_VERSION=0.55.5
+ENV HUGO_VERSION=0.55.6
 ENV HUGO_ARCH=64bit
 ENV PLUGIN_HUGO_ARCH=$HUGO_ARCH
 ENV PLUGIN_HUGO_SHIPPED_VERSION=$HUGO_VERSION
