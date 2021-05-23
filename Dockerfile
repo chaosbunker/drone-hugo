@@ -28,6 +28,8 @@ FROM plugins/base:linux-amd64
 LABEL maintainer="Dennis Rodewyk <ufo@chaosbunker.com>" \
   org.label-schema.name="Drone Hugo"
 
+RUN apk --no-cache add git libc6-compat libstdc++
+
 COPY --from=builder /go/bin/drone-hugo /bin
 COPY --from=builder /tmp/hugo /bin/hugo
 COPY --from=builder /tmp/hugo-extended /bin/hugo-extended
