@@ -1,6 +1,8 @@
-FROM golang:alpine AS builder
+FROM amd64/golang:1.16-alpine AS builder
 
 WORKDIR /build
+
+ENV HUGO_VERSION=0.83.1
 
 ENV GOOS=linux
 ENV GOARCH=amd64
@@ -15,19 +17,19 @@ COPY . .
 
 RUN go build -v -a -tags netgo -o release/linux/amd64/drone-hugo
 
+RUN apk add --no-cache git build-base && \
+  git clone --branch v${HUGO_VERSION} https://github.com/gohugoio/hugo.git && \
+  cd hugo/ && \
+  CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/gohugoio/hugo/common/hugo.buildDate=$(date +%Y-%m-%dT%H:%M:%SZ) -X github.com/gohugoio/hugo/common/hugo.commitHash=$(git rev-parse --short HEAD)" -o /tmp/hugo . && \
+  CGO_ENABLED=1 go build -tags extended -ldflags "-s -w -X github.com/gohugoio/hugo/common/hugo.buildDate=$(date +%Y-%m-%dT%H:%M:%SZ) -X github.com/gohugoio/hugo/common/hugo.commitHash=$(git rev-parse --short HEAD)" -o /tmp/hugo-extended
+
 FROM plugins/base:linux-amd64
 
 LABEL maintainer="Dennis Rodewyk <ufo@chaosbunker.com>" \
   org.label-schema.name="Drone Hugo"
 
-ENV HUGO_VERSION=0.83.1
-ENV HUGO_ARCH=64bit
-ENV PLUGIN_HUGO_ARCH=$HUGO_ARCH
-ENV PLUGIN_HUGO_SHIPPED_VERSION=$HUGO_VERSION
-
-RUN apk --no-cache add git && \
-    wget -O- https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_${HUGO_VERSION}_Linux-${HUGO_ARCH}.tar.gz | tar xz -C /bin
-
 COPY --from=builder /go/bin/drone-hugo /bin
+COPY --from=builder /tmp/hugo /bin/hugo
+COPY --from=builder /tmp/hugo-extended /bin/hugo-extended
 
 ENTRYPOINT ["/bin/drone-hugo"]
